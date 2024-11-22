@@ -59,6 +59,7 @@ def import_images(dataset):
 
     transform = CTTransform()
 
+    print('=========================================================')
     with tqdm(total=len(dataset.keys()), desc='Loading data for patients') as patient_bar:
         for patients in dataset.keys():
             # Process images (slices) stored in .npy files
@@ -86,6 +87,7 @@ def import_images(dataset):
     images = np.array(images)
     masks = np.array(masks)
 
+    print('=========================================================')
     return images, masks
 
 def import_data_and_show_summary(data_dir, num_patients=None):
@@ -186,16 +188,14 @@ def validate_epoch(model, val_loader, criterion, device):
     false_positives = np.sum((all_labels == 0) & (all_preds == 1))
     precision = true_positives / (true_positives + false_positives + 1e-6)
 
-    print(f"Validation Loss: {avg_val_loss:.4f}, Dice: {dice_coeff:.4f}, IoU: {jaccard_index:.4f}, Precision: {precision:.4f}")
-
     return avg_val_loss, dice_coeff, jaccard_index, precision
 
 def train_and_evaluate(model, epochs, train_loader, val_loader, criterion, optimizer, device, patience=None, save_model=False, model_path='./checkpoint/best_model.pth'):
 
     print("=========================================================")
-    print(" __                   _                          _ ")
-    print("(_ _|_ _ __ _|_ o __ (_|   _|_ __ _  o __  o __ (_|")
-    print("__) |_(_|| ' |_ | | |__|    |_ | (_| | | | | | |__|")
+    print(" __                   _                          _  ")
+    print("(_ _|_ _ __ _|_ o __ (_|   _|_ __ _  o __  o __ (_| ")
+    print("__) |_(_|| ' |_ | | |__|    |_ | (_| | | | | | |__| ")
     print("=========================================================")
     print("Starting training for", epochs, "epochs")
     print("=========================================================")

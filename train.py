@@ -13,14 +13,18 @@ def main():
 
     parser.add_argument('--data_dir', type=str, required=True, help="Path to the dataset")
     parser.add_argument('--epochs', type=int, default=10, help="Number of training epochs")
-    parser.add_argument('--num_patients', type=int, default=40, help="Number of training epochs")
     parser.add_argument('--batch_size', type=int, default=8, help="Batch size for training")
     parser.add_argument('--lr', type=float, default=0.0001, help="Learning rate")
     parser.add_argument('--split_ratio', type=float, default=0.8, help="Train/validation split ratio")
     parser.add_argument('--device', type=str, default='cuda' if torch.cuda.is_available() else 'cpu', help="Device for training")
-    parser.add_argument('--model_path', type=str, default='./checkpoint/nested_unet_pancreas.pth', help="Save the best model")
+    parser.add_argument('--save_model', type=bool, default=False, help="Save model")
+    parser.add_argument('--model_path', type=str, default='checkpoint/nested_unet_pancreas.pth', help="Save the best model")
+    parser.add_argument('--num_patients', type=int, default=40, help="Number of patients in training")
     
     args = parser.parse_args()
+
+    print('=========================================================')
+    print("Training Attention U-net ++")
 
     # Data transformations
     transform = SegmentationTransform()
@@ -61,7 +65,7 @@ def main():
         optimizer=optimizer,
         device=args.device,
         epochs=args.epochs,
-        save_model=False,
+        save_model=args.save_model,
         model_path=args.model_path
     )
 
