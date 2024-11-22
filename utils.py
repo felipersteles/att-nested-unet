@@ -2,6 +2,7 @@ import os
 import cv2
 import numpy as np
 import torch
+import nibabel as nib
 from tqdm import tqdm
 from sklearn.metrics import jaccard_score
 
