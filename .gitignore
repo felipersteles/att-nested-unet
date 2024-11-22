@@ -1,4 +1,7 @@
 dataset
 data
 __pycache__
+*/*.pyc
+*.pyc
 weights
+.DS_Store

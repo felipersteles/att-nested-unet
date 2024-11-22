@@ -11,8 +11,9 @@ def main():
 
     parser = argparse.ArgumentParser(description="Train Att Nested U-Net for pancreas segmentation")
 
-    parser.add_argument('--data_dir', type=str, default='./dataset/cropped_filtered', help="Path to the dataset")
+    parser.add_argument('--data_dir', type=str, required=True, help="Path to the dataset")
     parser.add_argument('--epochs', type=int, default=10, help="Number of training epochs")
+    parser.add_argument('--num_patients', type=int, default=40, help="Number of training epochs")
     parser.add_argument('--batch_size', type=int, default=8, help="Batch size for training")
     parser.add_argument('--lr', type=float, default=0.0001, help="Learning rate")
     parser.add_argument('--split_ratio', type=float, default=0.8, help="Train/validation split ratio")
@@ -27,7 +28,7 @@ def main():
     # Load datasets
     dataset = PancreasDataset(
         data_dir=args.data_dir, 
-        num_patients=1,
+        num_patients=args.num_patients,
         transform=transform
     )
 
