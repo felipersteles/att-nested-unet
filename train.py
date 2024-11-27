@@ -3,7 +3,7 @@ import torch
 from torch import nn, optim
 from torch.utils.data import DataLoader, random_split
 from models.dataset import PancreasDataset, SegmentationTransform  # Custom dataset for pancreas segmentation
-from models.nest_unet import NestedUNetWithAttention 
+from models.nest_unet import NestedUNetWithMultiheadAttention 
 from models.utils import train_and_evaluate
 from models.losses import BinaryDiceBCELoss
 
@@ -54,7 +54,7 @@ def main():
         break  # Remove this to iterate through all batches
 
     # # Model, loss, optimizer
-    model = NestedUNetWithAttention(
+    model = NestedUNetWithMultiheadAttention(
         num_classes=1, 
         input_channels=1, 
         deep_supervision=args.deep_supervision

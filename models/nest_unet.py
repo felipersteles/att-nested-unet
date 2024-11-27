@@ -107,34 +107,53 @@ class NestedUNet(nn.Module):
             output = self.final(x0_4)
         
         return output
-
-class AttentionBlock(nn.Module):
-    def __init__(self, in_channels, gating_channels, inter_channels):
+    
+class MultiheadAttentionBlock(nn.Module):
+    def __init__(self, in_channels, gating_channels, inter_channels, num_heads=8):
         super().__init__()
+        
+        # Ensure that inter_channels is a multiple of num_heads for MultiheadAttention
+        self.inter_channels = inter_channels
+        
+        # Conv layers to process input and gating channels
         self.theta = nn.Conv2d(in_channels, inter_channels, kernel_size=2, stride=2, padding=0, bias=False)
         self.phi = nn.Conv2d(gating_channels, inter_channels, kernel_size=1, stride=1, padding=0, bias=True)
         self.psi = nn.Conv2d(inter_channels, 1, kernel_size=1, stride=1, padding=0, bias=True)
+        
+        # Multihead Attention layer
+        self.multihead_attention = nn.MultiheadAttention(embed_dim=inter_channels, num_heads=num_heads, batch_first=True)
+        
         self.relu = nn.ReLU(inplace=True)
         self.sigmoid = nn.Sigmoid()
         self.upsample = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True)
 
     def forward(self, x, g):
-        theta_x = self.theta(x)
-        phi_g = self.phi(g)
-        add_xg = self.relu(theta_x + phi_g)
-        psi = self.sigmoid(self.psi(add_xg))
+        # Apply convolutions to get query and key
+        theta_x = self.theta(x).view(x.size(0), self.inter_channels, -1).permute(0, 2, 1)  # B x C x H*W
+        phi_g = self.phi(g).view(g.size(0), self.inter_channels, -1).permute(0, 2, 1)  # B x C x H*W
+        
+        # Apply Multihead Attention
+        attn_output, attn_weights = self.multihead_attention(theta_x, phi_g, phi_g)
+        
+        # Reshape and upsample the output to the original size
+        attn_output = attn_output.permute(0, 2, 1).view(x.size(0), self.inter_channels, x.size(2), x.size(3))
+
+        # Compute attention mask
+        psi = self.sigmoid(self.psi(attn_output))
         psi_upsampled = self.upsample(psi)
+
         return x * psi_upsampled
 
-class NestedUNetWithAttention(NestedUNet):
+
+class NestedUNetWithMultiheadAttention(NestedUNet):
     def __init__(self, num_classes, input_channels=1, deep_supervision=False):
         super().__init__(num_classes, input_channels, deep_supervision)
 
         nb_filter = [64, 128, 256, 512, 1024]
-        self.attn1 = AttentionBlock(nb_filter[0], nb_filter[1], nb_filter[0] // 2)
-        self.attn2 = AttentionBlock(nb_filter[1], nb_filter[2], nb_filter[1] // 2)
-        self.attn3 = AttentionBlock(nb_filter[2], nb_filter[3], nb_filter[2] // 2)
-        self.attn4 = AttentionBlock(nb_filter[3], nb_filter[4], nb_filter[3] // 2)
+        self.attn1 = MultiheadAttentionBlock(nb_filter[0], nb_filter[1], nb_filter[0] // 2)
+        self.attn2 = MultiheadAttentionBlock(nb_filter[1], nb_filter[2], nb_filter[1] // 2)
+        self.attn3 = MultiheadAttentionBlock(nb_filter[2], nb_filter[3], nb_filter[2] // 2)
+        self.attn4 = MultiheadAttentionBlock(nb_filter[3], nb_filter[4], nb_filter[3] // 2)
 
     def forward(self, input):
         # Encoder
@@ -144,7 +163,7 @@ class NestedUNetWithAttention(NestedUNet):
         x3_0 = self.conv3_0(self.pool(x2_0))
         x4_0 = self.conv4_0(self.pool(x3_0))
 
-        # Attention Gates
+        # Multihead Attention Gates
         g1 = self.attn1(x0_0, x1_0)
         g2 = self.attn2(x1_0, x2_0)
         g3 = self.attn3(x2_0, x3_0)
