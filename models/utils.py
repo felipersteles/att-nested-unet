@@ -210,6 +210,8 @@ def train_and_evaluate(model, epochs, train_loader, val_loader, criterion, optim
     best_val_loss = float('inf')
     best_dice =0
 
+    torch.cuda.empty_cache()
+    
     for epoch in range(epochs):
         show_epoch = epoch + 1
 
