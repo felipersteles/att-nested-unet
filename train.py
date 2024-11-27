@@ -2,10 +2,10 @@ import argparse
 import torch
 from torch import nn, optim
 from torch.utils.data import DataLoader, random_split
-from dataset import PancreasDataset, SegmentationTransform  # Custom dataset for pancreas segmentation
-from model import NestedUNet 
-from utils import train_and_evaluate
-from losses import BinaryDiceBCELoss
+from models.dataset import PancreasDataset, SegmentationTransform  # Custom dataset for pancreas segmentation
+from models.nest_unet import NestedUNetWithAttention 
+from models.utils import train_and_evaluate
+from models.losses import BinaryDiceBCELoss
 
 def main():
 
@@ -17,9 +17,11 @@ def main():
     parser.add_argument('--lr', type=float, default=0.0001, help="Learning rate")
     parser.add_argument('--split_ratio', type=float, default=0.8, help="Train/validation split ratio")
     parser.add_argument('--device', type=str, default='cuda' if torch.cuda.is_available() else 'cpu', help="Device for training")
+    parser.add_argument('--deep_supervision', type=bool, default=False, help="Enable deep supervision")
     parser.add_argument('--save_model', type=bool, default=False, help="Save model")
     parser.add_argument('--model_path', type=str, default='checkpoint/nested_unet_pancreas.pth', help="Save the best model")
     parser.add_argument('--num_patients', type=int, default=40, help="Number of patients in training")
+    parser.add_argument('--patience', type=int, default=None, help="Number of epochs without improvement in training")
     
     args = parser.parse_args()
 
@@ -52,7 +54,12 @@ def main():
         break  # Remove this to iterate through all batches
 
     # # Model, loss, optimizer
-    model = NestedUNet(num_classes=1, input_channels=1).to(args.device)
+    model = NestedUNetWithAttention(
+        num_classes=1, 
+        input_channels=1, 
+        deep_supervision=args.deep_supervision
+    ).to(args.device)
+
     criterion = BinaryDiceBCELoss()
     optimizer = optim.AdamW(model.parameters(), lr=args.lr)
 
@@ -66,7 +73,8 @@ def main():
         device=args.device,
         epochs=args.epochs,
         save_model=args.save_model,
-        model_path=args.model_path
+        model_path=args.model_path,
+        patience=args.patience
     )
 
     # # Save model

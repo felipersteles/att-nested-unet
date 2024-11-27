@@ -101,7 +101,7 @@ def import_data_and_show_summary(data_dir, num_patients=None):
     
 
 def dataset_summary(dataset):
-  print('\n=========================================================')
+  print('=========================================================')
   print('Dataset summary:')
   print('------------------------------')
   print(f'Number of patient: {len(dataset.keys())}')
@@ -114,7 +114,7 @@ def data_summary(train_images, train_masks, title):
     pancreas_train = np.sum(np.any(train_masks > 0, axis=(1, 2)))
 
     # Show summary after import images
-    print('\n=========================================================')
+    print('=========================================================')
     print(f'{title} summary:')
     print('------------------------------')
     print(f'Number of images for {title}: {train_images.shape}')

@@ -44,7 +44,7 @@ class BinaryFocalLoss(nn.Module):
         super(BinaryFocalLoss, self).__init__()
         self.alpha = alpha
         self.gamma = gamma
-        self.smooth = 1e-6  # set '1e-4' when train with FP16
+        self.smooth = 1e-6
         self.ignore_index = ignore_index
         self.reduction = reduction
 

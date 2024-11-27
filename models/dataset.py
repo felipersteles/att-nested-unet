@@ -4,7 +4,7 @@ from torch.utils.data import Dataset
 from torchvision import transforms
 from typing import Callable, List, Tuple
 from PIL import Image
-from utils import import_data_and_show_summary
+from models.utils import import_data_and_show_summary
 
 class SegmentationTransform:
     def __init__(self, input_shape=(224, 160)):
