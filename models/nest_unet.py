@@ -206,7 +206,7 @@ class MultiheadAttentionBlock(nn.Module):
         phi_g = self.phi(g).view(g.size(0), self.inter_channels, -1).permute(0, 2, 1)  # B x C x H*W
         
         # Apply Multihead Attention
-        attn_output, attn_weights = self.multihead_attention(theta_x, phi_g, phi_g)
+        attn_output, _ = self.multihead_attention(theta_x, phi_g, phi_g)
         
         # Reshape and upsample the output to the original size
         attn_output = attn_output.permute(0, 2, 1).view(x.size(0), self.inter_channels, x.size(2), x.size(3))
@@ -217,15 +217,14 @@ class MultiheadAttentionBlock(nn.Module):
 
         return x * psi_upsampled
 
-
 class NestedUNetWithMultiheadAttention(NestedUNet):
     def __init__(self, num_classes, input_channels=1, deep_supervision=False):
         super().__init__(num_classes, input_channels, deep_supervision)
 
         nb_filter = [64, 128, 256, 512, 1024]
-        self.attn1 = MultiheadAttentionBlock(nb_filter[0], nb_filter[1], nb_filter[0] // 2)
+
+        # Use multi-head attention blocks for two layers
         self.attn2 = MultiheadAttentionBlock(nb_filter[1], nb_filter[2], nb_filter[1] // 2)
-        self.attn3 = MultiheadAttentionBlock(nb_filter[2], nb_filter[3], nb_filter[2] // 2)
         self.attn4 = MultiheadAttentionBlock(nb_filter[3], nb_filter[4], nb_filter[3] // 2)
 
     def forward(self, input):
@@ -236,16 +235,14 @@ class NestedUNetWithMultiheadAttention(NestedUNet):
         x3_0 = self.conv3_0(self.pool(x2_0))
         x4_0 = self.conv4_0(self.pool(x3_0))
 
-        # Multihead Attention Gates
-        g1 = self.attn1(x0_0, x1_0)
+        # Apply Multihead Attention Gates at selected levels
         g2 = self.attn2(x1_0, x2_0)
-        g3 = self.attn3(x2_0, x3_0)
         g4 = self.attn4(x3_0, x4_0)
 
         # Decoder with Attention
-        x0_1 = self.conv0_1(torch.cat([g1, self.up(x1_0)], 1))
+        x0_1 = self.conv0_1(torch.cat([x0_0, self.up(x1_0)], 1))
         x1_1 = self.conv1_1(torch.cat([g2, self.up(x2_0)], 1))
-        x2_1 = self.conv2_1(torch.cat([g3, self.up(x3_0)], 1))
+        x2_1 = self.conv2_1(torch.cat([x2_0, self.up(x3_0)], 1))
         x3_1 = self.conv3_1(torch.cat([g4, self.up(x4_0)], 1))
 
         x0_2 = self.conv0_2(torch.cat([x0_0, x0_1, self.up(x1_1)], 1))
