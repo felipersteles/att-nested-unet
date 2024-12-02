@@ -19,7 +19,8 @@ def main():
     parser.add_argument('--device', type=str, default='cuda' if torch.cuda.is_available() else 'cpu', help="Device for training")
     parser.add_argument('--deep_supervision', type=bool, default=False, help="Enable deep supervision")
     parser.add_argument('--save_model', type=bool, default=False, help="Save model")
-    parser.add_argument('--model_path', type=str, default='./checkpoint/nested_unet_pancreas.pth', help="Save the best model")
+    parser.add_argument('--model_path', type=str, default='./checkpoint', help="Save the best model")
+    parser.add_argument('--model_name', type=str, default='nested_unet_pancreas.pth', help="Save the best model")
     parser.add_argument('--num_patients', type=int, default=40, help="Number of patients in training")
     parser.add_argument('--patience', type=int, default=None, help="Number of epochs without improvement in training")
     
@@ -74,6 +75,7 @@ def main():
         epochs=args.epochs,
         save_model=args.save_model,
         model_path=args.model_path,
+        model_name=args.model_name, 
         patience=args.patience
     )
 

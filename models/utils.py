@@ -190,7 +190,7 @@ def validate_epoch(model, val_loader, criterion, device):
 
     return avg_val_loss, dice_coeff, jaccard_index, precision
 
-def train_and_evaluate(model, epochs, train_loader, val_loader, criterion, optimizer, device, patience=None, save_model=False, model_path='./checkpoint/best_model.pth'):
+def train_and_evaluate(model, epochs, train_loader, val_loader, criterion, optimizer, device, patience=None, save_model=False, model_path='./checkpoint', model_name='best_model.pth'):
 
     print("=========================================================")
     print(" __                   _                          _  ")
@@ -236,11 +236,10 @@ def train_and_evaluate(model, epochs, train_loader, val_loader, criterion, optim
             best_dice = dice_coeff
 
             if save_model is True:
-                if not os.path.exists(save_model):
-                    path_to_save = save_model - save_model.split('/')[-1]
-                    os.makedirs(path_to_save)
+                if not os.path.exists(model_path):
+                    os.makedirs(model_path)
 
-                torch.save(model.state_dict(), model_path)
+                torch.save(model.state_dict(), model_path + "/" + model_name)
                 print(f"Saved best model weights with Dice: {dice_coeff:.4f} at epoch: {show_epoch}")
 
         # Check if this is the best Val Loss and save weights if needed
