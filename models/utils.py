@@ -237,8 +237,9 @@ def train_and_evaluate(model, epochs, train_loader, val_loader, criterion, optim
 
             if save_model is True:
                 if not os.path.exists(save_model):
-                    os.makedirs(save_model)
-                    
+                    path_to_save = save_model - save_model.split('/')[-1]
+                    os.makedirs(path_to_save)
+
                 torch.save(model.state_dict(), model_path)
                 print(f"Saved best model weights with Dice: {dice_coeff:.4f} at epoch: {show_epoch}")
 
