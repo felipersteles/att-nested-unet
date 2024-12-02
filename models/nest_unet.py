@@ -201,21 +201,25 @@ class MultiheadAttentionBlock(nn.Module):
         self.upsample = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True)
 
     def forward(self, x, g):
+        B, C, H, W = x.size()
+
         # Apply convolutions to get query and key
-        theta_x = self.theta(x).view(x.size(0), self.inter_channels, -1).permute(0, 2, 1)  # B x C x H*W
-        phi_g = self.phi(g).view(g.size(0), self.inter_channels, -1).permute(0, 2, 1)  # B x C x H*W
-        
-        # Apply Multihead Attention
-        attn_output, _ = self.multihead_attention(theta_x, phi_g, phi_g)
-        
-        # Reshape and upsample the output to the original size
-        attn_output = attn_output.permute(0, 2, 1).view(x.size(0), self.inter_channels, x.size(2), x.size(3))
+        theta_x = self.theta(x).view(B, self.inter_channels, -1).permute(0, 2, 1)  # B x H*W x C
+        phi_g = self.phi(g).view(B, self.inter_channels, -1).permute(0, 2, 1)  # B x H*W x C
 
-        # Compute attention mask
-        psi = self.sigmoid(self.psi(attn_output))
-        psi_upsampled = self.upsample(psi)
+        # Ensure dimensions match for attention
+        attn_output, _ = self.multihead_attention(theta_x, phi_g, phi_g)  # Output: B x H*W x C
 
-        return x * psi_upsampled
+        # Reshape back to spatial dimensions
+        new_H, new_W = self.theta(x).size(2), self.theta(x).size(3)  # Infer spatial size after theta
+        attn_output = attn_output.permute(0, 2, 1).view(B, self.inter_channels, new_H, new_W)
+
+        # Upsample and compute attention mask
+        attn_output_upsampled = self.upsample(attn_output)
+        psi = self.sigmoid(self.psi(attn_output_upsampled))
+
+        # Apply attention mask
+        return x * psi
 
 class NestedUNetWithMultiheadAttention(NestedUNet):
     def __init__(self, num_classes, input_channels=1, deep_supervision=False):
