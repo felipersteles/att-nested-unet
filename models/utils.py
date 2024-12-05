@@ -2,9 +2,13 @@ import os
 import cv2
 import numpy as np
 import torch
-import nibabel as nib
 from tqdm import tqdm
-from sklearn.metrics import jaccard_score
+import torch
+import matplotlib.pyplot as plt
+import numpy as np
+from torchvision.transforms import ToPILImage
+from models.metrics import precision_score, dice_coefficient, calc_jaccard_index
+from PIL import Image
 
 class CTTransform:
     def __init__(self, clip_limit=2.0, tile_grid_size=(8, 8), d=5, sigma_color=75, sigma_space=25):
@@ -181,12 +185,10 @@ def validate_epoch(model, val_loader, criterion, device):
 
     # Compute metrics
     avg_val_loss = val_loss / len(val_loader)
-    dice_coeff = 2 * np.sum(all_labels * all_preds) / (np.sum(all_labels) + np.sum(all_preds) + 1e-6)
-    jaccard_index = jaccard_score(all_labels, all_preds, zero_division=1)
+    dice_coeff = dice_coefficient(all_preds, all_labels)
+    jaccard_index = calc_jaccard_index(all_labels, all_preds, zero_division=1)
+    precision = precision_score(all_preds, all_labels)
 
-    true_positives = np.sum((all_labels == 1) & (all_preds == 1))
-    false_positives = np.sum((all_labels == 0) & (all_preds == 1))
-    precision = true_positives / (true_positives + false_positives + 1e-6)
 
     return avg_val_loss, dice_coeff, jaccard_index, precision
 
@@ -258,3 +260,94 @@ def train_and_evaluate(model, epochs, train_loader, val_loader, criterion, optim
 
     print(f"The best DICE achieved was {best_dice:.4f}.")
     return metrics
+
+def visualize_segmentation(input_tensor, output_tensor, mask_tensor):
+    """
+    Visualizes segmentation results using the NestedUNetWithMultiheadAttention model.
+
+    Args:
+        input_tensor: Input image tensor of shape (1, C, H, W).
+        output_tensor: Predicted segmentation tensor of shape (1, C, H, W).
+        mask_tensor: Ground truth mask tensor of shape (1, C, H, W).
+    """
+    # Convert input image, predicted output, and ground truth mask to displayable formats
+    input_image_display = input_tensor.squeeze(0).cpu().numpy()
+    if input_image_display.shape[0] == 1:  # Grayscale image
+        input_image_display = input_image_display[0]
+
+    mask_tensor_display = mask_tensor.squeeze(0).cpu().numpy()
+    if mask_tensor_display.shape[0] == 1:  # Grayscale mask
+        mask_tensor_display = mask_tensor_display[0]
+
+    # Plot input image, predicted mask, and ground truth mask
+    fig, ax = plt.subplots(1, 3, figsize=(15, 5))
+
+    # Plot the input image
+    ax[0].imshow(input_image_display, cmap='gray')
+    ax[0].set_title('Input Image')
+    ax[0].axis('off')
+
+    # Plot the predicted segmentation
+    ax[1].imshow(output_tensor, cmap='gray')
+    ax[1].set_title('Predicted Segmentation')
+    ax[1].axis('off')
+
+    # Plot the ground truth mask
+    ax[2].imshow(mask_tensor_display, cmap='gray')
+    ax[2].set_title('Ground Truth Mask')
+    ax[2].axis('off')
+
+    # Tight layout and display
+    plt.tight_layout()
+    plt.show()
+
+def compare_model_state_dicts(model, weights_path, device='cpu'):
+    """
+    Compare the state_dict keys of the current model with the loaded state_dict.
+
+    Args:
+        model (torch.nn.Module): The model to compare.
+        weights_path (str): Path to the saved weights.
+        device (str): The device to load the weights on ('cpu' or 'cuda').
+    """
+    # Load saved state_dict
+    saved_state_dict = torch.load(weights_path, map_location=device, weights_only=True)
+
+    # Get state_dict keys
+    saved_keys = set(saved_state_dict.keys())
+    model_keys = set(model.state_dict().keys())
+
+    # Print saved state_dict keys
+    # print("Keys in Saved State Dict:")
+    # for key in saved_keys:
+    #     print(key)
+    # print("--------------------------------")
+
+    # # Print model state_dict keys
+    # print("Keys in Model State Dict:")
+    # for key in model_keys:
+    #     print(key)
+    # print("--------------------------------")
+
+    # Compare keys
+    missing_keys = model_keys - saved_keys
+    extra_keys = saved_keys - model_keys
+
+    if not missing_keys and not extra_keys:
+        print("The state_dict keys match perfectly!")
+    else:
+        if missing_keys:
+            print("--------------------------------")
+            print("Missing keys:", len(missing_keys))
+            print("--------------------------------")
+            print("Missing keys in saved state_dict:")
+            for key in missing_keys:
+                print(key)
+
+        if extra_keys:
+            print("--------------------------------")
+            print("Extra keys:", len(extra_keys))
+            print("--------------------------------")
+            print("Extra keys in saved state_dict:")
+            for key in extra_keys:
+                print(key)
