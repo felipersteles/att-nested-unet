@@ -186,7 +186,7 @@ def validate_epoch(model, val_loader, criterion, device):
     # Compute metrics
     avg_val_loss = val_loss / len(val_loader)
     dice_coeff = dice_coefficient(all_preds, all_labels)
-    jaccard_index = calc_jaccard_index(all_labels, all_preds, zero_division=1)
+    jaccard_index = calc_jaccard_index(all_labels, all_preds)
     precision = precision_score(all_preds, all_labels)
 
 

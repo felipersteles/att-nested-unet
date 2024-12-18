@@ -2,7 +2,7 @@ import torch
 import matplotlib.pyplot as plt
 import os
 import numpy as np
-from models.nest_unet import NestedUNetWithMultiheadAttention
+from models.nest_unet import NestedUNet
 from models.utils import visualize_segmentation, compare_model_state_dicts
 from models.metrics import calc_jaccard_index, dice_coefficient
 from torchvision.transforms import Compose, ToTensor, Normalize
@@ -27,7 +27,7 @@ def main():
     deep_supervision = False
 
     # Initialize model
-    model = NestedUNetWithMultiheadAttention(num_classes=num_classes, input_channels=input_channels, deep_supervision=deep_supervision)
+    model = NestedUNet(num_classes=num_classes, input_channels=input_channels, deep_supervision=deep_supervision)
 
     # Path to pretrained weights
     weights_path = "./weights/nested_unet_pancreas.pth"  # Replace with the actual path
@@ -75,7 +75,7 @@ def main():
         mask = mask_tensor.squeeze().cpu().numpy()
 
         # Convert the output and mask to binary (0 or 1)
-        output_bin = (output > 0.3).astype(np.uint8)
+        output_bin = (output > 0.5).astype(np.uint8)
         mask_bin = (mask > 0.5).astype(np.uint8)
 
         # Calculate Dice coefficient and Jaccard index

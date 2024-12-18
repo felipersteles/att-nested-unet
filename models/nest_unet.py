@@ -2,31 +2,38 @@ import torch
 from torch import nn
 
 class ResNetBlock(nn.Module):
-    def __init__(self, in_channels, out_channels):
+    def __init__(self, in_channels, out_channels, stride=1):
         super().__init__()
-        self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=1, padding=1)
-        self.bn1 = nn.BatchNorm2d(out_channels)
-        self.relu = nn.ReLU(inplace=True)
-
         # Residual block
         self.residual_block = nn.Sequential(
-            nn.Conv2d(out_channels, out_channels, kernel_size=3, stride=1, padding=1),
+            nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=stride, padding=1),
             nn.BatchNorm2d(out_channels),
             nn.ReLU(inplace=True),
             nn.Conv2d(out_channels, out_channels, kernel_size=3, stride=1, padding=1),
             nn.BatchNorm2d(out_channels),
         )
+        
+        # Downsample layer for the skip connection if in_channels != out_channels or stride != 1
+        if in_channels != out_channels or stride != 1:
+            self.downsample = nn.Sequential(
+                nn.Conv2d(in_channels, out_channels, kernel_size=1, stride=stride, bias=False),
+                nn.BatchNorm2d(out_channels),
+            )
+        else:
+            self.downsample = None
+
+        self.relu = nn.ReLU(inplace=True)
 
     def forward(self, x):
+        # Residual branch
+        residual = self.residual_block(x)
         
-        out = self.conv1(x)
-        out = self.bn1(out)
-        out = self.relu(out)
-
-        # Residual connection
-        residual = self.residual_block(out)
-        return self.relu(out + residual)
-
+        # Shortcut connection (identity or downsampled)
+        shortcut = x if self.downsample is None else self.downsample(x)
+        
+        # Add the residual and shortcut
+        out = residual + shortcut
+        return self.relu(out)
 
 class NestedUNet(nn.Module):
     def __init__(self, num_classes, input_channels=1, deep_supervision=False):

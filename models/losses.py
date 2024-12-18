@@ -75,7 +75,7 @@ class BinaryFocalLoss(nn.Module):
         return loss
 
 class BinaryDiceBCELoss(nn.Module):
-    def __init__(self, bce_weight=0.5, dice_weight=0.5):
+    def __init__(self, bce_weight=0.3, dice_weight=0.7):
         super(BinaryDiceBCELoss, self).__init__()
         self.bce_weight = bce_weight
         self.dice_weight = dice_weight
