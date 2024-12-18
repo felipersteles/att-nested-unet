@@ -19,8 +19,8 @@ def main():
     # Define the hyperparameter grid
     param_grid = {
         "learning_rate": [1e-4, 5e-4, 1e-3],
-        "batch_size": [8, 16, 32],
-        "weight_decay": [0.0, 1e-5],
+        "batch_size": [8, 16],
+        "weight_decay": [0.0, 1e-3 ,1e-5],
     }
 
     # Create combinations of all hyperparameters
