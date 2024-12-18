@@ -1,7 +1,6 @@
 import torch
 import torch.nn.functional as F
 from torch import nn
-from models.metrics import dice_coefficient
 
 class BinaryDiceLoss(nn.Module):
     def __init__(self, smooth=1e-6):
@@ -45,7 +44,7 @@ class BinaryFocalLoss(nn.Module):
         super(BinaryFocalLoss, self).__init__()
         self.alpha = alpha
         self.gamma = gamma
-        self.smooth = 1e-6
+        self.smooth = 1e-6  # set '1e-4' when train with FP16
         self.ignore_index = ignore_index
         self.reduction = reduction
 
@@ -75,17 +74,20 @@ class BinaryFocalLoss(nn.Module):
         return loss
 
 class BinaryDiceBCELoss(nn.Module):
-    def __init__(self, bce_weight=0.5, dice_weight=0.5):
+    def __init__(self, epsilon=1e-6, bce_weight=0.3, dice_weight=0.7):
         super(BinaryDiceBCELoss, self).__init__()
+        self.epsilon = epsilon
         self.bce_weight = bce_weight
         self.dice_weight = dice_weight
         self.bce_loss = nn.BCEWithLogitsLoss()  # Binary Cross Entropy Loss with logits
 
     def forward(self, outputs, labels):
         # BCE Loss
+        # BCEWithLogitsLoss internally applies sigmoid, so we don't need to apply it manually
         bce_loss = self.bce_loss(outputs, labels)
 
-        # Apply sigmoid to the outputs for Dice loss
+        # Dice Loss
+        # Apply sigmoid to the outputs to bring them in the [0, 1] range for Dice loss
         outputs = torch.sigmoid(outputs)
 
         # Flatten the tensors along the batch and channel dimensions
@@ -97,13 +99,13 @@ class BinaryDiceBCELoss(nn.Module):
         output_sum = outputs.sum(dim=1)
         label_sum = labels.sum(dim=1)
 
-        # Check for zero division and compute Dice score
-        dice_score = dice_coefficient(output_sum, label_sum)
+        # Compute Dice score for each image in batch
+        dice_score = (2. * intersection + self.epsilon) / (output_sum + label_sum + self.epsilon)
 
         # Dice loss is 1 - Dice score (averaged over the batch)
         dice_loss = 1 - dice_score.mean()
 
         # Combined loss (weighted sum of BCE and Dice loss)
-        combined_loss = (self.bce_weight * bce_loss) + (self.dice_weight * dice_loss)
+        combined_loss = self.bce_weight * bce_loss + self.dice_weight * dice_loss
 
         return combined_loss
