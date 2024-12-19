@@ -83,7 +83,7 @@ def main():
     ).to(args.device)
 
     criterion = BinaryDiceBCELoss()
-    optimizer = optim.AdamW(model.parameters(), lr=args.lr, weight_decay=0.00)
+    optimizer = optim.AdamW(model.parameters(), lr=args.lr, weight_decay=0.001)
 
     # Training the model
     train_and_evaluate(
