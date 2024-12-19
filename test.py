@@ -30,7 +30,7 @@ def main():
     model = NestedUNet(num_classes=num_classes, input_channels=input_channels, deep_supervision=deep_supervision)
 
     # Path to pretrained weights
-    weights_path = "./weights/nested_unet_pancreas.pth"  # Replace with the actual path
+    weights_path = "./weights/nested_unet_pancreas_3.pth"  # Replace with the actual path
 
     # Compare weights
     compare_model_state_dicts(model, weights_path, device='cpu')
@@ -51,8 +51,8 @@ def main():
     
 
     # Directory containing images and masks
-    image_dir = "data/cropped_filtered/train/pancreas_004/slice"
-    mask_dir = "data/cropped_filtered/train/pancreas_004/pancreas"
+    image_dir = "data/cropped_filtered/test/efec/slice"
+    mask_dir = "data/cropped_filtered/test/efec/pancreas"
 
     # Iterate over all images in the directory
     for image_name in os.listdir(image_dir):
