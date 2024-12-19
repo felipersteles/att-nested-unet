@@ -6,49 +6,31 @@ from torchvision import transforms
 from typing import Callable, List, Tuple
 from PIL import Image
 from models.utils import import_data_and_show_summary
-
-import albumentations as A
-from albumentations.pytorch import ToTensorV2
-import numpy as np
-
 class SegmentationTransform:
     def __init__(self, input_shape=(224, 160)):
-        self.transform = A.Compose(
-            [
-                # Spatial augmentations
-                A.HorizontalFlip(p=0.5),
-                A.Affine(
-                    scale=(0.95, 1.05),
-                    translate_percent=(0.05, 0.05),
-                    rotate=(-5, 5),
-                    shear=(-5, 5),
-                    p=0.8
-                ),
-                A.Resize(height=input_shape[0], width=input_shape[1]),
-                
-                # Intensity augmentations
-                A.RandomBrightnessContrast(brightness_limit=0.05, contrast_limit=0.05, p=0.5),
-                A.GaussianBlur(blur_limit=(3, 5), p=0.2),  # Simulate subtle motion blur
-                A.GaussNoise(var_limit=(10.0, 50.0), p=0.2),  # Add Gaussian noise
-                
-                # Convert to PyTorch tensor
-                ToTensorV2(),
-            ]
-        )
+        self.image_transform = transforms.Compose([
+            transforms.ToPILImage(),
+            transforms.Resize(input_shape),
+            transforms.RandomHorizontalFlip(),
+            transforms.RandomRotation(15),  # Smaller rotation for medical images
+            transforms.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.1),  # Subtle intensity augmentation
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.0], std=[0.1]),  # Normalization for CT scans (adjust based on dataset)
+        ])
 
-        # Mask-specific transformations (must align spatially with image)
-        self.mask_transform = A.Compose(
-            [
-                A.Resize(height=input_shape[0], width=input_shape[1]),
-                ToTensorV2(),
-            ]
-        )
+        self.mask_transform = transforms.Compose([
+            transforms.ToPILImage(),
+            transforms.Resize(input_shape, interpolation=Image.NEAREST),
+            transforms.RandomHorizontalFlip(),
+            transforms.RandomRotation(15),  # Keep rotation consistent with image
+            transforms.ToTensor(),
+        ])
+
 
     def __call__(self, image, mask):
-        # Ensure consistent random augmentations for both image and mask
-        augmented = self.transform(image=image, mask=mask)
-        image = augmented["image"]
-        mask = augmented["mask"]
+        image = self.image_transform(image)
+        mask = self.mask_transform(mask)
+
         return image, mask
 
 
