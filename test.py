@@ -30,7 +30,7 @@ def main():
     model = NestedUNet(num_classes=num_classes, input_channels=input_channels, deep_supervision=deep_supervision)
 
     # Path to pretrained weights
-    weights_path = "./weights/nested_unet_pancreas_5.pth"  # Replace with the actual path
+    weights_path = "./weights/nested_unet_pancreas (7).pth"  # Replace with the actual path
 
     # Compare weights
     compare_model_state_dicts(model, weights_path, device='cpu')

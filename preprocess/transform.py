@@ -1,7 +1,8 @@
 import argparse
 import os
 from tqdm import tqdm
-from models.utils import save_nifti_with_masks
+
+from utils import save_nifti_with_masks
 
 if __name__ == "__main__":
 
