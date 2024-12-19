@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader, random_split
 from models.dataset import PancreasDataset, SegmentationTransform  # Custom dataset for pancreas segmentation
 from models.nest_unet import NestedUNet 
 from models.utils import train_and_evaluate
-from models.losses import BinaryDiceBCELoss
+from models.losses import BCEDiceLoss
 
 def main():
 
@@ -82,7 +82,7 @@ def main():
         deep_supervision=args.deep_supervision
     ).to(args.device)
 
-    criterion = BinaryDiceBCELoss()
+    criterion = BCEDiceLoss()
     optimizer = optim.AdamW(model.parameters(), lr=args.lr, weight_decay=0.001)
 
     # Training the model
