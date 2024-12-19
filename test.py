@@ -30,7 +30,7 @@ def main():
     model = NestedUNet(num_classes=num_classes, input_channels=input_channels, deep_supervision=deep_supervision)
 
     # Path to pretrained weights
-    weights_path = "./weights/nested_unet_pancreas_4.pth"  # Replace with the actual path
+    weights_path = "./weights/nested_unet_pancreas_5.pth"  # Replace with the actual path
 
     # Compare weights
     compare_model_state_dicts(model, weights_path, device='cpu')
@@ -70,7 +70,7 @@ def main():
         
         # Assuming deep supervision is not used, take the last output
         output = output[-1] if isinstance(output, list) else output
-        output = output.squeeze().cpu().numpy()  # Apply sigmoid to get probabilities
+        output = torch.sigmoid(output).squeeze().cpu().numpy()  # Apply sigmoid to get probabilities
 
         mask = mask_tensor.squeeze().cpu().numpy()
 
