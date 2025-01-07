@@ -1,5 +1,5 @@
 # Nested U-net
-Este repósitorio contém a implementação do código baseado no artigo <i>UNet++: A Nested U-Net Architecture for Medical Image Segmentation<i> ([doi](https://doi.org/10.48550/arXiv.1807.10165)).
+Este repósitorio contém a implementação do código baseado no artigo <i>UNet++: A Nested U-Net Architecture for Medical Image Segmentation<i> ([doi](https://doi.org/10.48550/arXiv.1807.10165))<i>.
 
 Diversos experimentos foram realizados para chegar a este resultado, entretato é nítido que ainda tem muito a ser melhorado, portanto caso veja alguma falha no experimento, pode se sentir à vontade para compartilhar seu comentário na sessão de <i>issues<i> do repositório.
 
